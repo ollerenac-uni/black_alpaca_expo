@@ -94,11 +94,19 @@ Si reconfiguras tras un fallo, borra el cache antes: `rm -rf build`.
 uhd_images_downloader        # baja imágenes FPGA del B210 si faltan
 uhd_find_devices             # debe listar type: b200
 ```
-**RTL-SDR:** radioconda instala el blacklist de `dvb_usb_rtl28xxu`. Reconecta el
-dongle y prueba:
+**RTL-SDR:** radioconda instala el blacklist de `dvb_usb_rtl28xxu`. Además hace
+falta una regla udev para acceder al USB sin root (si no, `rtl_test` da
+`usb_open error -3`):
 ```bash
-rtl_test -t                  # debe detectar el tuner
+sudo tee /etc/udev/rules.d/rtl-sdr.rules >/dev/null <<'EOF'
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2832", GROUP="plugdev", MODE="0666", SYMLINK+="rtl_sdr"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2838", GROUP="plugdev", MODE="0666", SYMLINK+="rtl_sdr"
+EOF
+sudo udevadm control --reload-rules && sudo udevadm trigger
+# desconecta y reconecta el dongle, luego:
+rtl_test -t                  # debe detectar el tuner (R820T/R820T2)
 ```
+Si `lsusb | grep -i realtek` muestra otro `idProduct`, ajústalo en la regla.
 
 ### Paso 4 — venv de GSMEvil2
 
