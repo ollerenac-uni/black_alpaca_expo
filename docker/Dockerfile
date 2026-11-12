@@ -25,6 +25,7 @@ RUN git clone https://github.com/ptrkrysik/gr-gsm.git /tmp/gr-gsm \
     && cd /tmp/gr-gsm \
     && git checkout 2ebf07d \
     && cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr \
+         -DGR_PYTHON_DIR=/usr/lib/python3/dist-packages \
     && cmake --build build -j"$(nproc)" \
     && cmake --install build \
     && ldconfig \
