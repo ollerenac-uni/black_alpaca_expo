@@ -9,6 +9,11 @@ en el tiempo.
 > Uso educativo / investigación de seguridad autorizada. La recepción pasiva y el
 > análisis se hacen con fines de demostración del riesgo de seguir operando 2G.
 
+> **Inicio rápido:** la forma recomendada de crear y levantar la plataforma es
+> **Docker** (ver [Instalación con Docker](#instalación-docker--forma-recomendada)).
+> La [instalación nativa](#instalación-nativa-alternativa--sin-docker) queda como
+> alternativa para quien no pueda usar Docker.
+
 ## Estructura
 
 ```
@@ -25,10 +30,12 @@ identidad-al-aire-handoff.md   contexto y bitácora del proyecto
 
 `gr-gsm/` **no** está versionado aquí (clon de terceros pesado). Re-clónalo.
 
-## Docker (recomendado)
+## Instalación (Docker — forma recomendada)
 
-Imagen todo-en-uno (GNU Radio + gr-gsm + GSMEvil2). Evita la instalación manual.
-**Solo host Linux** (necesita passthrough USB real y loopback del host).
+**Esta es la forma principal de crear y levantar la plataforma.** Imagen
+todo-en-uno (GNU Radio + gr-gsm + GSMEvil2); no requiere instalar nada a mano más
+que Docker. Build reproducible y validado. **Solo host Linux** (necesita
+passthrough USB real).
 
 Requisito del host (el contenedor no puede hacerlo): que el kernel no acapare el
 RTL-SDR.
@@ -68,7 +75,11 @@ Variables: `SDR_FREQ` (req), `SDR_GAIN` (40), `SDR_SR` (1e6), `SDR_ARGS`
 > (`OOOO`) cuando otro proceso toma CPU. Docker no lo arregla — corre en un
 > equipo con CPU decente, a ser posible con governor `performance` y en corriente.
 
-## Instalación (bare metal)
+## Instalación nativa (alternativa — sin Docker)
+
+> Usa esto **solo si no puedes/quieres usar Docker** (p. ej. quieres `grgsm_*`
+> directo en el host, o depurar la radio sin contenedor). Es más tediosa y
+> depende de tu distro. Para la mayoría, usa Docker (arriba).
 
 Probado en Ubuntu 22.04, GNU Radio 3.10.12 (radioconda), UHD 4.8, USRP B210.
 Dos entornos Python separados **a propósito**: radioconda (base) para la radio
@@ -181,7 +192,10 @@ env activo) y por defecto usan **cualquier B210** (`--args="type=b200"`).
 - Un B210 concreto: `GRGSM_ARGS='type=b200,serial=XXXX' ./demo_livemon.sh 879.8M`
 - Binarios en otra ruta: exporta `GRGSM_LIVEMON` / `GRGSM_SCANNER`.
 
-## Correr la demo
+## Correr la demo (instalación nativa)
+
+> Con Docker no necesitas esto: `docker compose ... up` ya lanza demodulador +
+> sniffer. Lo de abajo es para la instalación nativa con los `demo_*.sh`.
 
 ```bash
 # 1) encontrar una celda viva
