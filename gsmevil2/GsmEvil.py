@@ -21,7 +21,7 @@ from threading import Thread, Event
 import sqlite3
 from datetime import datetime
 import logging
-from analytics import imsi_analytics
+from analytics import imsi_analytics, imsi_lookup
 
 grgsm = "off"
 gsm_sniffer = "off"
@@ -240,6 +240,12 @@ def analytics():
     mnc = request.args.get('mnc', type=int)
     data = imsi_analytics(os.path.join('database', 'imsi.db'), mcc, mnc)
     return render_template('analytics.html', **data)
+
+@app.route('/search/')
+def search():
+    q = request.args.get('imsi', '').strip()
+    data = imsi_lookup(os.path.join('database', 'imsi.db'), q) if q else None
+    return render_template('search.html', q=q, data=data)
 
 @socketio.on('sms_sniffer')
 def handel_sms_event(json):

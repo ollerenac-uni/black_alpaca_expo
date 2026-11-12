@@ -116,6 +116,46 @@ def imsi_analytics(db_path, mcc=None, mnc=None, local_mcc=LOCAL_MCC):
     return result
 
 
+def imsi_lookup(db_path, query, local_mcc=LOCAL_MCC, limit=50):
+    """Search captured IMSIs for a (partial) IMSI the audience shares.
+
+    `query` is sanitized to digits only and matched with a parameterized LIKE
+    (contains), so an audience-supplied value can never inject SQL. Returns a
+    FOUND/NOT-FOUND verdict plus per-IMSI presence for the live 'is YOUR phone
+    in here?' demo.
+    """
+    digits = "".join(ch for ch in str(query) if ch.isdigit())
+    result = {"query": query, "digits": digits, "found": False,
+              "match_count": 0, "rows": [], "total_subscribers": 0}
+    if not os.path.exists(db_path) or len(digits) < 4:
+        # Require >=4 digits so a near-empty query can't dump the whole table.
+        result["too_short"] = len(digits) < 4
+        return result
+    con = _connect_ro(db_path)
+    try:
+        cur = con.cursor()
+        cur.execute("SELECT COUNT(DISTINCT imsi) FROM imsi_data")
+        result["total_subscribers"] = cur.fetchone()[0] or 0
+        cur.execute(
+            """SELECT imsi, MAX(mcc), MAX(mnc), COUNT(*) hits,
+                      MIN(date_time) first_seen, MAX(date_time) last_seen,
+                      COUNT(DISTINCT NULLIF(tmsi,'')) tmsi_count
+               FROM imsi_data WHERE imsi LIKE ?
+               GROUP BY imsi ORDER BY hits DESC, last_seen DESC LIMIT ?""",
+            ("%" + digits + "%", limit))
+        for imsi, mcc, mnc, hits, first, last, tc in cur.fetchall():
+            result["rows"].append({
+                "imsi": imsi, "mcc": mcc, "mnc": mnc, "hits": hits,
+                "first_seen": first, "last_seen": last, "tmsi_count": tc,
+                "country": country_for(mcc), "operator": operator_for(mcc, mnc),
+                "foreign": (mcc is not None and int(mcc) != local_mcc)})
+        result["match_count"] = len(result["rows"])
+        result["found"] = result["match_count"] > 0
+    finally:
+        con.close()
+    return result
+
+
 if __name__ == "__main__":
     # ponytail self-check: build a temp DB, verify overview + drilldown + foreign flag.
     import tempfile
@@ -148,4 +188,17 @@ if __name__ == "__main__":
 
     # Missing DB must not crash.
     assert imsi_analytics(os.path.join(d, "nope.db"))["totals"]["subscribers"] == 0
-    print("OK analytics self-check: overview, drilldown, foreign flag, presence, empty-safe")
+
+    # imsi_lookup: full hit, partial (suffix) hit, miss, too-short, injection-safe.
+    full = imsi_lookup(p, "716060857701849")
+    assert full["found"] and full["rows"][0]["hits"] == 2, full
+    assert full["total_subscribers"] == 3
+    partial = imsi_lookup(p, "701849")          # last digits only
+    assert partial["found"] and partial["match_count"] == 1
+    assert imsi_lookup(p, "000000000000000")["found"] is False, "miss"
+    assert imsi_lookup(p, "12")["too_short"] is True, "needs >=4 digits"
+    # Sanitization: non-digits stripped; a SQL metachar must not match-all or error.
+    inj = imsi_lookup(p, "7160' OR '1'='1")
+    assert inj["digits"] == "716011" and inj["found"] is False, inj
+    print("OK analytics self-check: overview, drilldown, foreign flag, presence, "
+          "lookup (full/partial/miss/short/injection-safe), empty-safe")

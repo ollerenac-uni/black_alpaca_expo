@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" type="image/png" href="{{ url_for('static', filename='./img/favicon.ico') }}">
+	<title>GSM EVIL 2 — Buscar IMSI</title>
+	<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+	<link href="{{ url_for('static', filename='./css/bootstrap.css') }}" rel="stylesheet">
+	<style>
+		body { background:#1b2431; color:#e7ecf3; font-family:'Roboto',Arial,sans-serif; margin:0; }
+		.wrap { max-width:900px; margin:0 auto; padding:24px 16px 60px; }
+		.top { display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+		.brand { font-size:26px; font-weight:700; letter-spacing:1px; }
+		.brand b { color:#e23b3b; }
+		a { color:#7fb2ff; text-decoration:none; } a:hover { text-decoration:underline; }
+		.nav a { margin-right:16px; }
+		.muted { color:#9db0c7; }
+		form.search { display:flex; gap:10px; margin:18px 0; flex-wrap:wrap; }
+		input[type=text] { flex:1; min-width:220px; padding:14px 16px; font-size:18px;
+			border-radius:10px; border:1px solid #2f3e54; background:#202b3b; color:#e7ecf3;
+			font-family:'Roboto Mono',monospace; letter-spacing:1px; }
+		button { padding:14px 24px; font-size:16px; font-weight:700; border:0; border-radius:10px;
+			background:#e23b3b; color:#fff; cursor:pointer; }
+		.verdict { border-radius:14px; padding:26px 24px; margin:20px 0; text-align:center; }
+		.verdict.found { background:#3a2330; border:2px solid #e23b3b; }
+		.verdict.miss  { background:#20323f; border:2px solid #2f6f4f; }
+		.verdict .big { font-size:40px; font-weight:800; letter-spacing:1px; }
+		.verdict.found .big { color:#ff6a6a; }
+		.verdict.miss  .big { color:#5fcf8f; }
+		.verdict .sub { font-size:16px; color:#cdd8e6; margin-top:8px; }
+		table { width:100%; border-collapse:collapse; background:#202b3b; border-radius:10px; overflow:hidden; margin-top:14px; }
+		th,td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #2a3850; }
+		th { background:#28374d; color:#aebfd6; text-transform:uppercase; font-size:11px; letter-spacing:.5px; }
+		.mono { font-family:'Roboto Mono',monospace; letter-spacing:1px; }
+		.tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; }
+		.tag.foreign { background:#e23b3b; color:#fff; } .tag.local { background:#2f6f4f; color:#fff; }
+		.hint { color:#9db0c7; font-size:14px; }
+	</style>
+</head>
+<body>
+<div class="wrap">
+	<div class="top">
+		<div class="brand">G<b>SM</b>EVIL · Buscar IMSI</div>
+		<div class="nav muted" style="margin-left:auto;">
+			<a href="/">Home</a><a href="/imsi/">Live IMSI</a><a href="/analytics/">Analytics</a><a href="/search/">Buscar</a>
+		</div>
+	</div>
+
+	<p class="muted">¿Tu teléfono pasó por aquí? Escribe tu IMSI (o sus últimos dígitos)
+	y comprueba si está entre las capturadas pasivamente.</p>
+
+	<form class="search" method="get" action="/search/">
+		<input type="text" name="imsi" value="{{ q|e }}" placeholder="IMSI o últimos dígitos (p.ej. 857701849)" autofocus inputmode="numeric">
+		<button type="submit">Buscar</button>
+	</form>
+
+	{% if data is none %}
+		<p class="hint">Mínimo 4 dígitos. Solo se usan los dígitos; cualquier otro carácter se ignora.</p>
+	{% elif data.too_short %}
+		<div class="verdict miss"><div class="big">Ingresa ≥ 4 dígitos</div>
+			<div class="sub">Para evitar listar toda la base, la búsqueda necesita al menos 4 dígitos.</div></div>
+	{% elif data.found %}
+		<div class="verdict found">
+			<div class="big">✓ ENCONTRADO</div>
+			<div class="sub">
+				{% if data.match_count == 1 %}Tu IMSI está{% else %}{{ data.match_count }} IMSIs coinciden y están{% endif %}
+				entre las <b>{{ data.total_subscribers }}</b> capturadas. Sin transmitir nada, esta red te expuso.
+			</div>
+		</div>
+		<table>
+			<tr><th>IMSI</th><th>Red</th><th></th><th>Pagings</th><th>TMSI</th><th>Primera vez</th><th>Última vez</th></tr>
+			{% for r in data.rows %}
+			<tr>
+				<td class="mono">{{ r.imsi }}</td>
+				<td>{{ r.country }} · {{ r.operator }}</td>
+				<td>{% if r.foreign %}<span class="tag foreign">ROAMER</span>{% else %}<span class="tag local">LOCAL</span>{% endif %}</td>
+				<td><b>{{ r.hits }}</b></td>
+				<td>{{ r.tmsi_count }}</td>
+				<td class="muted">{{ r.first_seen }}</td>
+				<td class="muted">{{ r.last_seen }}</td>
+			</tr>
+			{% endfor %}
+		</table>
+	{% else %}
+		<div class="verdict miss">
+			<div class="big">✗ No encontrado</div>
+			<div class="sub">Ninguna de las <b>{{ data.total_subscribers }}</b> IMSIs capturadas coincide con
+				<span class="mono">{{ data.digits }}</span>. Tu teléfono no se vio en esta ventana de captura
+				(o no estaba en 2G).</div>
+		</div>
+	{% endif %}
+</div>
+</body>
+</html>

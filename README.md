@@ -218,6 +218,14 @@ Captura sana en (2) = hex que **no** sea todo `2b`.
 - **Presencia**: por IMSI, nº de pagings y primera/última vez visto = rastreo pasivo.
 - **Escala**: suscriptores únicos y % expuesto.
 
+## Buscador de IMSI (`/search/`)
+
+Para el momento *"¿está TU teléfono aquí?"* en la presentación: un asistente
+escribe su IMSI (o los últimos dígitos) y la página responde **ENCONTRADO / No
+encontrado** contra lo capturado, con cuántas veces se vio y cuándo. La búsqueda
+es parametrizada y se filtra a solo dígitos (a prueba de inyección); pide ≥4
+dígitos para no volcar toda la base.
+
 ## Notas técnicas
 
 - Fix aplicado: `self.imsi_id` ahora se define en todas las ramas de `filter_imsi()`
