@@ -40,13 +40,14 @@ Dos entornos Python separados **a propósito**: radioconda (base) para la radio
 
 ### Paso 0 — Paquetes de sistema
 
-gr-gsm se compila con el compilador del sistema; `pyshark` usa `tshark`.
+gr-gsm se compila con el compilador del sistema y enlaza contra las libs de
+Osmocom (`libosmocore-dev`, que no viene en radioconda); `pyshark` usa `tshark`.
 
 ```bash
 sudo apt update
-sudo apt install -y build-essential cmake pkg-config git tshark
+sudo apt install -y build-essential cmake pkg-config git tshark libosmocore-dev
 ```
-Verifica: `cmake --version && tshark --version`.
+Verifica: `cmake --version && tshark --version && pkg-config --modversion libosmocore`.
 
 ### Paso 1 — Clonar este repo
 
