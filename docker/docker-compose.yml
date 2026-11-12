@@ -1,4 +1,5 @@
-# Linux host only (needs real USB passthrough + host loopback).
+# Linux host only (needs real USB passthrough).
+# Plug the SDR BEFORE 'up' (device is mapped at start, no hotplug).
 # Build:  docker compose -f docker/docker-compose.yml build
 # Run:    docker compose -f docker/docker-compose.yml up
 # Then open http://localhost/imsi/  (enable IMSI) and http://localhost/analytics/
@@ -8,13 +9,22 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     image: black-alpaca-expo
-    network_mode: host          # web on host:80, GSMTAP on host lo:4729
-    privileged: true            # raw USB access for the SDR
-    volumes:
+    # Least privilege instead of privileged:true.
+    # SYS_RAWIO: raw USB (libusb) for the SDR. NET_RAW: tshark/dumpcap on lo.
+    # NET_ADMIN: interface setup for the capture.
+    cap_add:
+      - SYS_RAWIO
+      - NET_RAW
+      - NET_ADMIN
+    devices:
       - /dev/bus/usb:/dev/bus/usb
+    ports:
+      - "127.0.0.1:80:80"       # web only on the host loopback, not the LAN
     environment:
       SDR_FREQ: "879.8M"        # strong local BCCH; change per your scan
       SDR_GAIN: "40"
       SDR_SR: "1e6"
       SDR_ARGS: "rtl=0"         # RTL-SDR. B210: "type=b200". autodetect: ""
     restart: "no"
+    # If the SDR is still not detected with the caps above, as a last resort
+    # replace the cap_add/devices block with:  privileged: true

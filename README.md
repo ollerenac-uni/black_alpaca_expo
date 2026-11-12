@@ -45,16 +45,22 @@ docker compose -f docker/docker-compose.yml up
 ```
 Abre `http://localhost/imsi/` (activa IMSI) y `http://localhost/analytics/`.
 
-Sin compose:
+Sin compose (mínimo privilegio, sin `--privileged`):
 ```bash
 docker build -t black-alpaca-expo -f docker/Dockerfile .
-# escanear celdas vivas (one-off):
-docker run --rm -it --privileged -v /dev/bus/usb:/dev/bus/usb \
+
+# escanear celdas vivas (one-off; solo USB):
+docker run --rm -it --cap-add SYS_RAWIO --device /dev/bus/usb \
   --entrypoint grgsm_scanner black-alpaca-expo --args=rtl=0 -b GSM850 -s 2e6
-# correr la demo (RTL en 879.8M):
-docker run --rm -it --net host --privileged -v /dev/bus/usb:/dev/bus/usb \
+
+# correr la demo (RTL en 879.8M; web solo en loopback del host):
+docker run --rm -it \
+  --cap-add SYS_RAWIO --cap-add NET_RAW --cap-add NET_ADMIN \
+  --device /dev/bus/usb -p 127.0.0.1:80:80 \
   -e SDR_FREQ=879.8M -e SDR_ARGS=rtl=0 black-alpaca-expo
 ```
+Conecta el SDR **antes** de `docker run` (el device se mapea al arrancar, sin
+hotplug). Si con las caps el SDR no se detecta, último recurso: `--privileged`.
 Variables: `SDR_FREQ` (req), `SDR_GAIN` (40), `SDR_SR` (1e6), `SDR_ARGS`
 (`rtl=0` RTL · `type=b200` B210 · `''` autodetecta).
 

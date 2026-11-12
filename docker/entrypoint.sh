@@ -21,4 +21,6 @@ sleep 3
 kill -0 "$LIVE" 2>/dev/null || { echo "ERROR: grgsm_livemon_headless exited (SDR not found / busy?)"; exit 1; }
 
 echo ">> GSMEvil2 on http://localhost:$PORT/   (open /imsi/ and enable IMSI, /analytics/ for roamers)"
-exec /opt/venv/bin/python GsmEvil.py -p "$PORT"
+# Bind 0.0.0.0 INSIDE the container so Docker's port map can reach it; the host
+# side is published only on 127.0.0.1 (see docker-compose.yml / run flags).
+exec /opt/venv/bin/python GsmEvil.py -p "$PORT" --host 0.0.0.0
