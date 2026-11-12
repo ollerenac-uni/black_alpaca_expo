@@ -1,0 +1,2 @@
+# Test deps (optional — the suite also runs frameworkless via tests/run.sh).
+pytest==8.3.4

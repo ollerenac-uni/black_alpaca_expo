@@ -226,6 +226,21 @@ encontrado** contra lo capturado, con cuántas veces se vio y cuándo. La búsqu
 es parametrizada y se filtra a solo dígitos (a prueba de inyección); pide ≥4
 dígitos para no volcar toda la base.
 
+## Pruebas
+
+Suite sin hardware en `gsmevil2/tests/` (pytest-compatible y también ejecutable
+sin framework). Cubre: lógica de `analytics.py` (overview/drilldown/lookup/
+etiquetas/inyección), regresión del crash `imsi_id`, smoke de rutas Flask, y lint
++ args de los `demo_*.sh`.
+
+```bash
+cd gsmevil2
+# con el venv de la app (flask/pyshark); pytest opcional:
+.gsmevil_venv/bin/pip install -r requirements-dev.txt
+PY=.gsmevil_venv/bin/python ./tests/run.sh      # usa pytest si está, si no, directo
+```
+`analytics.py` también trae su self-check: `python analytics.py`.
+
 ## Notas técnicas
 
 - Fix aplicado: `self.imsi_id` ahora se define en todas las ramas de `filter_imsi()`
