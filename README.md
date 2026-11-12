@@ -25,25 +25,99 @@ identidad-al-aire-handoff.md   contexto y bitácora del proyecto
 
 `gr-gsm/` **no** está versionado aquí (clon de terceros pesado). Re-clónalo.
 
-## Puesta en marcha en una máquina nueva
+## Instalación
 
-Dos entornos Python separados, a propósito:
+Probado en Ubuntu 22.04, GNU Radio 3.10.12 (radioconda), UHD 4.8, USRP B210.
+Dos entornos Python separados **a propósito**: radioconda (base) para la radio
+(`grgsm_*`), y un venv dedicado para GSMEvil2 (pyshark/flask).
 
-1. **radioconda (base)** — GNU Radio + UHD + gr-gsm (herramientas `grgsm_*`):
-   ```bash
-   # instala radioconda, luego dentro de (base):
-   git clone https://github.com/ptrkrysik/gr-gsm.git
-   # compila/instala gr-gsm en el entorno base (ver docs de gr-gsm)
-   ```
-2. **venv de GSMEvil2** — solo pyshark/flask:
-   ```bash
-   cd gsmevil2
-   python3 -m venv .gsmevil_venv
-   .gsmevil_venv/bin/pip install -r requirements.txt
-   ```
+### Prerrequisitos
 
-Hardware: USRP B210 (USB 3.0) o RTL-SDR. Los scripts usan el B210 por serial;
-ajusta `--args` en `demo_*.sh` o exporta `GRGSM_LIVEMON` / `GRGSM_SCANNER`.
+- **radioconda instalado** — sigue la fuente oficial de GNU Radio:
+  <https://github.com/ryanvolz/radioconda> (trae GNU Radio, UHD, gr-osmosdr,
+  rtl-sdr, SoapySDR; no necesitas instalarlos aparte).
+- USRP **B210** (USB 3.0) y/o un **RTL-SDR**.
+
+### Paso 0 — Paquetes de sistema
+
+gr-gsm se compila con el compilador del sistema; `pyshark` usa `tshark`.
+
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake pkg-config git tshark
+```
+Verifica: `cmake --version && tshark --version`.
+
+### Paso 1 — Clonar este repo
+
+```bash
+git clone https://github.com/ollerenac-uni/black_alpaca_expo.git
+cd black_alpaca_expo
+```
+
+### Paso 2 — Compilar gr-gsm dentro de radioconda (base)
+
+Mainline `ptrkrysik/gr-gsm` ya compila con GNU Radio 3.10 vía pybind11. Fijamos
+el commit probado (`2ebf07d`, 23/23 tests) y lo instalamos **en el prefix de
+radioconda** para que `grgsm_*` queden en el PATH de base.
+
+```bash
+conda activate base                 # entorno radioconda
+git clone https://github.com/ptrkrysik/gr-gsm.git
+cd gr-gsm
+git checkout 2ebf07d
+cmake -S . -B build \
+  -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \
+  -DCMAKE_PREFIX_PATH="$CONDA_PREFIX"
+cmake --build build -j"$(nproc)"
+ctest --test-dir build              # esperado: 23/23 passed
+cmake --install build
+cd ..
+```
+Verifica: `grgsm_scanner --help` responde sin error.
+
+### Paso 3 — Hardware
+
+**USRP B210** (UHD, ya en radioconda):
+```bash
+uhd_images_downloader        # baja imágenes FPGA del B210 si faltan
+uhd_find_devices             # debe listar type: b200
+```
+**RTL-SDR:** radioconda instala el blacklist de `dvb_usb_rtl28xxu`. Reconecta el
+dongle y prueba:
+```bash
+rtl_test -t                  # debe detectar el tuner
+```
+
+### Paso 4 — venv de GSMEvil2
+
+Créalo con el **python del sistema** (desactiva conda) para no mezclar entornos:
+
+```bash
+conda deactivate
+cd gsmevil2
+python3 -m venv .gsmevil_venv
+.gsmevil_venv/bin/pip install -r requirements.txt
+cd ..
+```
+Verifica: `gsmevil2/.gsmevil_venv/bin/python -c "import pyshark, flask; print('ok')"`.
+
+### Paso 5 — Permisos de captura
+
+El sniffer lee la interfaz `lo`, lo que requiere privilegios. `demo_sniffer.sh`
+ya usa `sudo`. Para evitar sudo cada vez, puedes dar capacidades a `dumpcap`:
+```bash
+sudo setcap cap_net_raw,cap_net_admin=eip "$(which dumpcap)"
+```
+
+### Hardware en los scripts
+
+Los `demo_*.sh` llaman a radioconda por **ruta absoluta** (funcionan con cualquier
+env activo) y por defecto usan **cualquier B210** (`--args="type=b200"`).
+
+- RTL-SDR: `GRGSM_ARGS='' ./demo_scan.sh`  (args vacíos = autodetecta el RTL)
+- Un B210 concreto: `GRGSM_ARGS='type=b200,serial=XXXX' ./demo_livemon.sh 879.8M`
+- Binarios en otra ruta: exporta `GRGSM_LIVEMON` / `GRGSM_SCANNER`.
 
 ## Correr la demo
 
