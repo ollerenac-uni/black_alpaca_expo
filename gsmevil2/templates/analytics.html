@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" type="image/png" href="{{ url_for('static', filename='./img/favicon.ico') }}">
+	<title>GSM EVIL 2 — Analytics</title>
+	<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+	<link href="{{ url_for('static', filename='./css/bootstrap.css') }}" rel="stylesheet">
+	<style>
+		body { background:#1b2431; color:#e7ecf3; font-family:'Roboto',Arial,sans-serif; margin:0; }
+		.wrap { max-width:1100px; margin:0 auto; padding:24px 16px 60px; }
+		.top { display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+		.brand { font-size:26px; font-weight:700; letter-spacing:1px; }
+		.brand b { color:#e23b3b; }
+		a { color:#7fb2ff; text-decoration:none; }
+		a:hover { text-decoration:underline; }
+		.cards { display:flex; gap:14px; flex-wrap:wrap; margin:10px 0 22px; }
+		.card { background:#232f40; border:1px solid #2f3e54; border-radius:10px; padding:14px 18px; min-width:150px; }
+		.card .n { font-size:30px; font-weight:700; }
+		.card .l { font-size:12px; color:#9db0c7; text-transform:uppercase; letter-spacing:.5px; }
+		.card.alert .n { color:#ff6a6a; }
+		table { width:100%; border-collapse:collapse; background:#202b3b; border-radius:10px; overflow:hidden; }
+		th,td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #2a3850; }
+		th { background:#28374d; color:#aebfd6; text-transform:uppercase; font-size:11px; letter-spacing:.5px; }
+		tr:hover td { background:#263347; }
+		tr.foreign td { background:#3a2330; }
+		tr.foreign:hover td { background:#48293a; }
+		.tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; }
+		.tag.foreign { background:#e23b3b; color:#fff; }
+		.tag.local { background:#2f6f4f; color:#fff; }
+		.mono { font-family:'Roboto Mono',monospace; }
+		.muted { color:#9db0c7; }
+		.nav a { margin-right:16px; }
+		h2 { margin:6px 0 2px; }
+	</style>
+</head>
+<body>
+<div class="wrap">
+	<div class="top">
+		<div class="brand">G<b>SM</b>EVIL · Analytics</div>
+		<div class="nav muted" style="margin-left:auto;">
+			<a href="/">Home</a><a href="/imsi/">Live IMSI</a><a href="/analytics/">Analytics</a>
+		</div>
+	</div>
+
+	<div class="cards">
+		<div class="card"><div class="n">{{ totals.subscribers }}</div><div class="l">Unique subscribers</div></div>
+		<div class="card"><div class="n">{{ totals.combos }}</div><div class="l">MCC+MNC networks</div></div>
+		<div class="card alert"><div class="n">{{ totals.foreign_subscribers }}</div><div class="l">Foreign subscribers</div></div>
+		<div class="card"><div class="n">{{ totals.hits }}</div><div class="l">Paging hits</div></div>
+	</div>
+
+	{% if mode == 'overview' %}
+		<h2>Home networks seen (MCC + MNC)</h2>
+		<p class="muted">Local MCC = {{ local_mcc }}. Rows in red = foreign SIM (roamer) seen passively. Click a row to see its IMSIs over time.</p>
+		<table>
+			<tr><th>Country (MCC)</th><th>Operator (MNC)</th><th></th><th>Subscribers</th><th>Hits</th><th>First seen</th><th>Last seen</th></tr>
+			{% for r in rows %}
+			<tr class="{{ 'foreign' if r.foreign else '' }}" onclick="location='/analytics/?mcc={{ r.mcc }}&mnc={{ r.mnc }}'" style="cursor:pointer">
+				<td>{{ r.country }} <span class="muted">({{ r.mcc }})</span></td>
+				<td>{{ r.operator }}</td>
+				<td>{% if r.foreign %}<span class="tag foreign">ROAMER</span>{% else %}<span class="tag local">LOCAL</span>{% endif %}</td>
+				<td><b>{{ r.subscribers }}</b></td>
+				<td>{{ r.hits }}</td>
+				<td class="muted">{{ r.first_seen }}</td>
+				<td class="muted">{{ r.last_seen }}</td>
+			</tr>
+			{% endfor %}
+			{% if not rows %}<tr><td colspan="7" class="muted">No IMSI data yet. Run the live capture first.</td></tr>{% endif %}
+		</table>
+
+	{% else %}
+		<p><a href="/analytics/">&larr; All networks</a></p>
+		<h2>
+			{{ selected.country }} <span class="muted">(MCC {{ selected.mcc }})</span> · {{ selected.operator }}
+			{% if selected.foreign %}<span class="tag foreign">ROAMER</span>{% else %}<span class="tag local">LOCAL</span>{% endif %}
+		</h2>
+		<p class="muted">Per-IMSI presence. "Hits" and first/last seen show how long each device lingered — passive tracking of a single subscriber.</p>
+		<table>
+			<tr><th>IMSI</th><th>Paging hits</th><th>Distinct TMSI</th><th>First seen</th><th>Last seen</th></tr>
+			{% for r in rows %}
+			<tr>
+				<td class="mono">{{ r.imsi }}</td>
+				<td><b>{{ r.hits }}</b></td>
+				<td>{{ r.tmsi_count }}</td>
+				<td class="muted">{{ r.first_seen }}</td>
+				<td class="muted">{{ r.last_seen }}</td>
+			</tr>
+			{% endfor %}
+			{% if not rows %}<tr><td colspan="5" class="muted">No IMSIs for this network.</td></tr>{% endif %}
+		</table>
+	{% endif %}
+</div>
+</body>
+</html>

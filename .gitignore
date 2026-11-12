@@ -1,0 +1,14 @@
+# Python env (machine-specific, re-create on each machine)
+gsmevil2/.gsmevil_venv/
+**/__pycache__/
+*.pyc
+
+# gr-gsm is a third-party clone (ptrkrysik/gr-gsm) built in radioconda — re-clone
+# it on each machine, do not vendor it here. See README.
+gr-gsm/
+
+# Logs and working backups
+*.log
+*.pre-demo.bak
+
+# Note: gsmevil2/database/*.db ARE committed on purpose (captured demo data).
