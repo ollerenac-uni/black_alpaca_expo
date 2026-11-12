@@ -8,7 +8,10 @@
 # Defaults = strongest live cell (ARFCN 181, Movistar PE, found 2026-11-11).
 # RTL-SDR overruns (flood of 'O') or PLL issues? run volk_profile once, then
 # lower the sample rate:  SAMP_RATE=1e6 GRGSM_ARGS='' ./demo_livemon.sh 879.8M
-LIVEMON="${GRGSM_LIVEMON:-$HOME/radioconda/bin/grgsm_livemon}"
+# Prefer the HEADLESS livemon (no Qt GUI) — far less CPU, so it won't overrun
+# ('O' flood) when the sniffer/tshark also load the CPU. Fall back to the GUI.
+LIVEMON="${GRGSM_LIVEMON:-$HOME/radioconda/bin/grgsm_livemon_headless}"
+[ -x "$LIVEMON" ] || LIVEMON="$HOME/radioconda/bin/grgsm_livemon"
 # Device args: default = any B210. RTL-SDR: GRGSM_ARGS='' ./demo_livemon.sh
 # Specific B210: GRGSM_ARGS='type=b200,serial=XXXX'
 DEV_ARGS="${GRGSM_ARGS-type=b200}"
