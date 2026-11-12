@@ -1,0 +1,7 @@
+**/.gsmevil_venv
+**/__pycache__
+**/*.pyc
+gr-gsm/
+.git/
+*.pre-demo.bak
+*.log

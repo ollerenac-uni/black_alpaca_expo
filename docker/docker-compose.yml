@@ -1,0 +1,20 @@
+# Linux host only (needs real USB passthrough + host loopback).
+# Build:  docker compose -f docker/docker-compose.yml build
+# Run:    docker compose -f docker/docker-compose.yml up
+# Then open http://localhost/imsi/  (enable IMSI) and http://localhost/analytics/
+services:
+  gsmevil2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: black-alpaca-expo
+    network_mode: host          # web on host:80, GSMTAP on host lo:4729
+    privileged: true            # raw USB access for the SDR
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+    environment:
+      SDR_FREQ: "879.8M"        # strong local BCCH; change per your scan
+      SDR_GAIN: "40"
+      SDR_SR: "1e6"
+      SDR_ARGS: "rtl=0"         # RTL-SDR. B210: "type=b200". autodetect: ""
+    restart: "no"

@@ -25,7 +25,44 @@ identidad-al-aire-handoff.md   contexto y bitácora del proyecto
 
 `gr-gsm/` **no** está versionado aquí (clon de terceros pesado). Re-clónalo.
 
-## Instalación
+## Docker (recomendado)
+
+Imagen todo-en-uno (GNU Radio + gr-gsm + GSMEvil2). Evita la instalación manual.
+**Solo host Linux** (necesita passthrough USB real y loopback del host).
+
+Requisito del host (el contenedor no puede hacerlo): que el kernel no acapare el
+RTL-SDR.
+```bash
+echo 'blacklist dvb_usb_rtl28xxu' | sudo tee /etc/modprobe.d/blacklist-rtl.conf
+sudo modprobe -r dvb_usb_rtl28xxu 2>/dev/null; # o reconecta el dongle
+```
+
+Construir y correr:
+```bash
+docker compose -f docker/docker-compose.yml build        # ~10-15 min la 1ª vez
+# ajusta SDR_FREQ/SDR_ARGS en docker/docker-compose.yml, luego:
+docker compose -f docker/docker-compose.yml up
+```
+Abre `http://localhost/imsi/` (activa IMSI) y `http://localhost/analytics/`.
+
+Sin compose:
+```bash
+docker build -t black-alpaca-expo -f docker/Dockerfile .
+# escanear celdas vivas (one-off):
+docker run --rm -it --privileged -v /dev/bus/usb:/dev/bus/usb \
+  --entrypoint grgsm_scanner black-alpaca-expo --args=rtl=0 -b GSM850 -s 2e6
+# correr la demo (RTL en 879.8M):
+docker run --rm -it --net host --privileged -v /dev/bus/usb:/dev/bus/usb \
+  -e SDR_FREQ=879.8M -e SDR_ARGS=rtl=0 black-alpaca-expo
+```
+Variables: `SDR_FREQ` (req), `SDR_GAIN` (40), `SDR_SR` (1e6), `SDR_ARGS`
+(`rtl=0` RTL · `type=b200` B210 · `''` autodetecta).
+
+> Nota CPU: el demod GSM en vivo es pesado. En equipos lentos aparecen overruns
+> (`OOOO`) cuando otro proceso toma CPU. Docker no lo arregla — corre en un
+> equipo con CPU decente, a ser posible con governor `performance` y en corriente.
+
+## Instalación (bare metal)
 
 Probado en Ubuntu 22.04, GNU Radio 3.10.12 (radioconda), UHD 4.8, USRP B210.
 Dos entornos Python separados **a propósito**: radioconda (base) para la radio
