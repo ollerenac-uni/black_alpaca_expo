@@ -45,9 +45,12 @@ Osmocom (`libosmocore-dev`, que no viene en radioconda); `pyshark` usa `tshark`.
 
 ```bash
 sudo apt update
-sudo apt install -y build-essential cmake pkg-config git tshark libosmocore-dev
+sudo apt install -y build-essential cmake pkg-config git tshark libosmocore-dev python3-venv
 ```
 Verifica: `cmake --version && tshark --version && pkg-config --modversion libosmocore`.
+
+`python3-venv` es para el entorno de GSMEvil2 (Paso 4); en Debian/Ubuntu el
+`python3` base no trae el módulo `venv` y falla con *"ensurepip is not available"*.
 
 ### Paso 1 — Clonar este repo
 
