@@ -63,6 +63,12 @@ radioconda** para que `grgsm_*` queden en el PATH de base.
 
 ```bash
 conda activate base                 # entorno radioconda
+
+# radioconda trae las LIBS de Boost/pybind11 (runtime de GNU Radio) pero no
+# siempre los HEADERS de desarrollo que necesita compilar un módulo OOT.
+# Sin esto cmake falla con "Could NOT find Boost (missing: Boost_INCLUDE_DIR...)".
+mamba install -c conda-forge -y libboost-devel pybind11
+
 git clone https://github.com/ptrkrysik/gr-gsm.git
 cd gr-gsm
 git checkout 2ebf07d
@@ -75,6 +81,7 @@ cmake --install build
 cd ..
 ```
 Verifica: `grgsm_scanner --help` responde sin error.
+Si reconfiguras tras un fallo, borra el cache antes: `rm -rf build`.
 
 ### Paso 3 — Hardware
 
