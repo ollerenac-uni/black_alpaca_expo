@@ -19,7 +19,7 @@ OUTDIR="$(cd "$(dirname "$OUT")" && pwd)"
 OUTBASE="$(basename "$OUT")"
 
 echo ">> recording ${SECS}s @ $FREQ (args=$ARGS) -> $OUTDIR/$OUTBASE"
-docker run --rm --cap-add SYS_RAWIO --cap-add NET_RAW --device /dev/bus/usb \
+docker run --rm --cap-add SYS_RAWIO --cap-add NET_RAW --cap-add NET_ADMIN --device /dev/bus/usb \
   -v "$OUTDIR":/out \
   -e SDR_FREQ="$FREQ" -e SDR_ARGS="$ARGS" -e SDR_SR=2e6 -e SDR_GAIN=42 \
   -e RECORD_PCAP="/out/$OUTBASE" -e RECORD_SECONDS="$SECS" \

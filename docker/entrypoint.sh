@@ -32,8 +32,12 @@ if [ -n "${RECORD_PCAP:-}" ]; then
   trap 'kill "$LIVE" 2>/dev/null' EXIT
   sleep 3
   kill -0 "$LIVE" 2>/dev/null || { echo "ERROR: SDR not found / busy"; exit 1; }
-  tshark -i lo -f 'udp port 4729 and not icmp' -w "$RECORD_PCAP" -a duration:"$SECS"
-  echo ">> recorded $RECORD_PCAP"
+  # dumpcap drops privileges and can't write to a host bind-mount; capture to the
+  # container's world-writable /tmp, then copy to the mount as root.
+  TMP=/tmp/_rec.pcap
+  tshark -i lo -f 'udp port 4729 and not icmp' -w "$TMP" -a duration:"$SECS"
+  cp "$TMP" "$RECORD_PCAP"
+  echo ">> recorded $RECORD_PCAP ($(tshark -r "$RECORD_PCAP" 2>/dev/null | wc -l) packets)"
   exit 0
 fi
 
