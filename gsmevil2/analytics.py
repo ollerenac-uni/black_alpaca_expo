@@ -30,6 +30,8 @@ MCC_COUNTRY = {
     530: "New Zealand", 602: "Egypt", 505: "Australia", 525: "Singapore",
     510: "Indonesia", 272: "Ireland", 204: "Netherlands", 228: "Switzerland",
     260: "Poland", 240: "Sweden", 238: "Denmark", 242: "Norway", 268: "Portugal",
+    295: "Liechtenstein", 901: "International",
+    219: "Croatia", 226: "Romania", 232: "Austria", 266: "Gibraltar",
 }
 
 # Peru operator names by MNC (home-network labeling for the local case).
