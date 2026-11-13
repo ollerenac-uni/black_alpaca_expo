@@ -293,6 +293,12 @@ def server():
     app.run(host=options.host, port=options.port, threaded=True)
 
 if __name__ == "__main__":
+    # Headless/Docker: start the IMSI sniffer immediately when AUTOSTART_IMSI is
+    # set, so no web click is needed. Default off; the web toggle still works.
+    if os.environ.get("AUTOSTART_IMSI", "").lower() in ("1", "true", "yes", "on"):
+        imsi_sniffer = "on"
+        gsm_sniffer = "on"
+        print("IMSI sniffer auto-started (AUTOSTART_IMSI)")
     server_thread =  Thread(target=server)
     server_thread.start()
     header()

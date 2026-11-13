@@ -33,12 +33,14 @@ identidad-al-aire-handoff.md   contexto y bitácora del proyecto
 ## Instalación (Docker — forma recomendada)
 
 **Esta es la forma principal de crear y levantar la plataforma.** Imagen
-todo-en-uno (GNU Radio + gr-gsm + GSMEvil2); no requiere instalar nada a mano más
-que Docker. Build reproducible y validado. **Solo host Linux** (necesita
-passthrough USB real).
+todo-en-uno multi-stage (GNU Radio + gr-gsm + GSMEvil2), **~2 GB**; no requiere
+instalar nada a mano más que Docker. **Solo host Linux** (necesita passthrough USB
+real). Probado end-to-end con **USRP B210** (captura IMSIs reales dentro del
+contenedor) y soporta **RTL-SDR**. Con `AUTOSTART_IMSI=1` (default) captura al
+arrancar, sin clic en la web.
 
-Requisito del host (el contenedor no puede hacerlo): que el kernel no acapare el
-RTL-SDR.
+Requisito del host **solo para RTL-SDR** (el contenedor no puede hacerlo): que el
+kernel no acapare el dongle. El B210 no lo necesita.
 ```bash
 echo 'blacklist dvb_usb_rtl28xxu' | sudo tee /etc/modprobe.d/blacklist-rtl.conf
 sudo modprobe -r dvb_usb_rtl28xxu 2>/dev/null; # o reconecta el dongle

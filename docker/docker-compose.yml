@@ -25,6 +25,7 @@ services:
       SDR_GAIN: "40"
       SDR_SR: "1e6"
       SDR_ARGS: "rtl=0"         # RTL-SDR. B210: "type=b200". autodetect: ""
+      AUTOSTART_IMSI: "1"       # capture on boot (headless); 0 = require web toggle
     restart: "no"
     # If the SDR is still not detected with the caps above, as a last resort
     # replace the cap_add/devices block with:  privileged: true
