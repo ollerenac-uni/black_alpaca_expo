@@ -77,6 +77,35 @@ Variables: `SDR_FREQ` (req), `SDR_GAIN` (40), `SDR_SR` (1e6), `SDR_ARGS`
 > (`OOOO`) cuando otro proceso toma CPU. Docker no lo arregla — corre en un
 > equipo con CPU decente, a ser posible con governor `performance` y en corriente.
 
+### Demo offline: grabar ahora, reproducir sin 2G (plan B del evento)
+
+Si en el lugar de la presentación **no hay celdas 2G**, no se puede capturar en
+vivo. Solución: grabar los paquetes **GSMTAP** ya demodulados de cada estación
+(minúsculo, ~pocos MB por 10 min) y reproducirlos en loop en el evento, **sin
+SDR**. GSMEvil2 no nota la diferencia: la tabla IMSI se llena, `/analytics/` y
+`/search/` funcionan igual.
+
+**Grabar ahora** (con señal; una vez por estación fuerte):
+```bash
+docker compose -f docker/docker-compose.yml build    # imagen lista
+mkdir recordings
+docker/record.sh 879.8M 600 recordings/rec_879M.pcap type=b200   # B210, 10 min
+docker/record.sh 892.2M 600 recordings/rec_892M.pcap type=b200
+# RTL-SDR: usa rtl=0 en el último argumento
+```
+
+**Reproducir en el evento** (sin SDR, en loop, concatena los pcaps):
+```bash
+docker/replay.sh recordings                 # todos los *.pcap
+# o pcaps concretos en orden:
+docker/replay.sh recordings rec_879M.pcap rec_892M.pcap
+# http://localhost/imsi/   /analytics/   /search/
+```
+Loopea indefinidamente → presentación *seamless*. Usa el histórico de la imagen
+para `/analytics/` rico desde el inicio; monta un dir de DB vacío para empezar de
+cero. (Grabación IQ cruda con `grgsm_capture` también es posible, pero son ~5 GB
+por 10 min/estación — por eso se usa GSMTAP.)
+
 ## Instalación nativa (alternativa — sin Docker)
 
 > Usa esto **solo si no puedes/quieres usar Docker** (p. ej. quieres `grgsm_*`

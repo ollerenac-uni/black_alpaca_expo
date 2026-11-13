@@ -41,7 +41,8 @@ RUN uhd_images_downloader -t b2xx || echo "WARN: b2xx images not fetched; B210 u
 WORKDIR /opt/gsmevil2
 COPY gsmevil2/ /opt/gsmevil2/
 RUN python3 -m venv /opt/venv \
-    && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt \
+    && /opt/venv/bin/pip install --no-cache-dir scapy   # for replay.py (offline demo)
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
