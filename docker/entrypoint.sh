@@ -37,6 +37,7 @@ if [ -n "${RECORD_PCAP:-}" ]; then
   TMP=/tmp/_rec.pcap
   tshark -i lo -f 'udp port 4729 and not icmp' -w "$TMP" -a duration:"$SECS"
   cp "$TMP" "$RECORD_PCAP"
+  chmod 644 "$RECORD_PCAP" 2>/dev/null || true   # readable on the host (dumpcap ran as non-root)
   echo ">> recorded $RECORD_PCAP ($(tshark -r "$RECORD_PCAP" 2>/dev/null | wc -l) packets)"
   exit 0
 fi

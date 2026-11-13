@@ -9,6 +9,7 @@ the whole demo seamlessly from recordings.
 
 Usage: replay.py rec_879M.pcap [rec_892M.pcap ...]
 """
+import os
 import socket
 import sys
 import time
@@ -16,6 +17,9 @@ import time
 from scapy.all import rdpcap, UDP
 
 GAP_BETWEEN_FILES = 0.5  # seconds
+# Playback speed multiplier (REPLAY_SPEED=5 => 5x faster, so the live table fills
+# visibly during a talk). 1.0 = realistic original timing.
+SPEED = max(0.1, float(os.environ.get("REPLAY_SPEED", "1")))
 
 
 def load(paths):
@@ -46,15 +50,16 @@ def main(paths):
         print("replay: no GSMTAP (udp/4729) packets found in", paths)
         return 1
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    total = items[-1][1]
-    print(f"replay: {len(items)} GSMTAP packets, ~{total:.0f}s loop -> 127.0.0.1:4729")
+    total = items[-1][1] / SPEED
+    print(f"replay: {len(items)} GSMTAP packets, ~{total:.0f}s loop @ {SPEED}x -> 127.0.0.1:4729")
     loops = 0
     while True:
         start = time.time()
         for payload, rel in items:
+            target = rel / SPEED
             now = time.time() - start
-            if rel > now:
-                time.sleep(rel - now)
+            if target > now:
+                time.sleep(target - now)
             sock.sendto(payload, ("127.0.0.1", 4729))
         loops += 1
         print(f"replay: loop {loops} done")

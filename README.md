@@ -101,10 +101,18 @@ docker/replay.sh recordings                 # todos los *.pcap
 docker/replay.sh recordings rec_879M.pcap rec_892M.pcap
 # http://localhost/imsi/   /analytics/   /search/
 ```
-Loopea indefinidamente → presentación *seamless*. Usa el histórico de la imagen
-para `/analytics/` rico desde el inicio; monta un dir de DB vacío para empezar de
-cero. (Grabación IQ cruda con `grgsm_capture` también es posible, pero son ~5 GB
-por 10 min/estación — por eso se usa GSMTAP.)
+Loopea indefinidamente → presentación *seamless*. **No montes una DB vacía:** usa
+el histórico de la imagen (miles de IMSIs, roamers) para que `/analytics/` y
+`/search/` salgan ricos desde el inicio; el replay mantiene `/imsi/` vivo.
+
+Las celdas 2G paginan casi todo por **TMSI**, así que una grabación de 10 min trae
+**pocas IMSIs en claro** (típico: 5-15/celda). Para más volumen en vivo: graba más
+celdas o más tiempo. Para que lleguen más rápido en la charla, acelera el replay:
+```bash
+REPLAY_SPEED=8 docker/replay.sh recordings     # 8x más rápido
+```
+(Grabación IQ cruda con `grgsm_capture` también sirve, pero ~5 GB por 10 min —
+por eso se usa GSMTAP, de pocos MB.)
 
 ## Instalación nativa (alternativa — sin Docker)
 

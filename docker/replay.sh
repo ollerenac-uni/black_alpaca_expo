@@ -23,4 +23,5 @@ echo ">> replaying:$FILES (loop, no SDR) -> http://localhost/imsi/"
 exec docker run --rm -it --cap-add NET_RAW --cap-add NET_ADMIN -p 127.0.0.1:80:80 \
   -v "$DIR":/pcaps:ro \
   -e REPLAY_PCAP="$FILES" \
+  -e REPLAY_SPEED="${REPLAY_SPEED:-1}" \
   "$IMAGE"
