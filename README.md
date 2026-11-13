@@ -54,6 +54,11 @@ docker compose -f docker/docker-compose.yml up
 ```
 Abre `http://localhost/imsi/` (activa IMSI) y `http://localhost/analytics/`.
 
+> La web se publica en el **puerto 80** del host. Si ya está ocupado, `up` falla
+> con *"address already in use"*: cambia el mapeo en `docker/docker-compose.yml`
+> (`ports: - "127.0.0.1:8080:80"`) y abre `http://localhost:8080/`. Con B210 el
+> único ajuste es `SDR_ARGS: "type=b200"`; con RTL-SDR deja `rtl=0`.
+
 Sin compose (mínimo privilegio, sin `--privileged`):
 ```bash
 docker build -t black-alpaca-expo -f docker/Dockerfile .
